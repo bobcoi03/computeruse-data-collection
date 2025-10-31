@@ -278,34 +278,3 @@ This tool is designed for consensual data collection. Users should:
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
-## Roadmap
-
-- [ ] **Cross-platform support** (Windows, macOS, Linux)
-- [ ] **One-click installers** (no pip required for non-technical users)
-- [ ] **Session replay viewer** to review your recordings visually
-- [ ] **Annotation tools** for labeling tasks in your sessions
-- [ ] **Privacy analyzer** to scan for sensitive data before sharing
-- [ ] **Direct sharing** to popular AI research platforms
-- [ ] **Browser integration** for web-specific task recording
-- [ ] **Mobile companion app** for recording mobile device usage
-
-## FAQ
-
-**Q: Do I need to know Python to use this?**  
-A: Nope! Just install it with `pip install computeruse-datacollection` and run `computeruse-collect`. The GUI makes it point-and-click simple.
-
-**Q: Will this slow down my computer?**  
-A: No. The program is designed to be lightweight with minimal performance impact. You can adjust quality settings in the app if needed.
-
-**Q: Can I see exactly what's being recorded?**  
-A: Yes! Click "View Sessions" in the app to inspect all collected data before sharing anything.
-
-**Q: What if I accidentally record something sensitive?**  
-A: You can delete individual sessions in the app, or enable anonymization features in settings. All data is local, so nothing leaves your machine unless you explicitly export it.
-
-**Q: Can I contribute my data to specific AI companies or research projects?**  
-A: Absolutely! Export your data and upload it wherever you choose. You have full control.
-
-**Q: How do I know it's not secretly uploading my data?**  
-A: The code is fully open source—you can inspect it yourself or have someone review it. No network connections are made unless you explicitly export and upload data yourself.
