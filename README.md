@@ -37,8 +37,16 @@ This library solves these problems by providing:
 - **Python**: 3.8 or higher (comes pre-installed on most systems)
 - **Disk Space**: 100 MB for the app + storage for your recordings
 - **RAM**: 200 MB minimum
+- **For MP4 video**: ffmpeg (install with `brew install ffmpeg`)
 
 Don't worry if you're not sure—the installer will check for you!
+
+### ✅ macOS Sequoia Users
+
+If you're on **macOS Sequoia (15.x)**:
+- ✅ **All recording modules work!** (keyboard, mouse, screen)
+- Uses separate processes to avoid tkinter/pynput conflicts
+- Just grant Input Monitoring + Screen Recording permissions in System Preferences
 
 ## Installation
 
@@ -99,6 +107,51 @@ computeruse-collect export session_id --output ./my_data.zip
 3. Do your computer work as normal
 4. Click "Stop Recording" when done
 5. Your data is saved locally in `~/computer_use_data/`
+
+## Where Are Files Stored?
+
+**Default Storage Location:**
+```
+~/computer_use_data/
+```
+
+On macOS/Linux, this expands to:
+```
+/Users/YourUsername/computer_use_data/
+```
+
+**Folder Structure:**
+Each recording session creates its own folder:
+```
+~/computer_use_data/
+├── session_<uuid1>/
+│   ├── events.jsonl          # Keyboard & mouse events with timestamps
+│   ├── screen_recording.mp4  # Screen video (H.264 MP4 format)
+│   └── metadata.json          # Session information
+├── session_<uuid2>/
+│   ├── events.jsonl
+│   ├── screen_recording.mp4
+│   └── metadata.json
+└── ...
+```
+
+**Accessing Your Files:**
+- **Via GUI**: Open the app → Click "View Sessions" → Select a session → Click "Export"
+- **Via Terminal**: 
+  ```bash
+  # Open the storage folder
+  open ~/computer_use_data
+  
+  # List all sessions
+  ls ~/computer_use_data
+  ```
+
+**Changing Storage Location:**
+You can change where files are stored:
+1. Open the app
+2. Click "Settings"
+3. Find "Storage Path" and click "Browse..."
+4. Select your preferred location
 
 ## Simple Interface
 
@@ -244,6 +297,13 @@ Make sure Python's bin directory is in your PATH. Try:
 ```bash
 python -m computeruse_datacollection
 ```
+
+### "macOS 26 (2600) or later required" error
+If you see this error on macOS Sequoia, uninstall the mss library:
+```bash
+pip uninstall mss
+```
+The app will automatically use native macOS APIs for screen capture instead.
 
 ### Permission errors on macOS
 The app needs permission to record your screen/keyboard. Go to:

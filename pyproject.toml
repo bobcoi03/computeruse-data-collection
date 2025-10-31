@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "computeruse-datacollection"
+version = "0.1.0"
+description = "A privacy-first application for collecting standardized computer use data to train AI agents"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Minh", email = "minh@everythingcompany.co"}
+]
+keywords = ["data-collection", "ai", "computer-use", "privacy", "training-data"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "pynput>=1.7.6",
+    "opencv-python>=4.8.0",
+    "Pillow>=10.0.0",
+    "numpy>=1.24.0",
+    "sounddevice>=0.4.6",
+    "scipy>=1.11.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+]
+
+[project.scripts]
+computeruse-collect = "computeruse_datacollection.__main__:main_entry"
+
+[project.urls]
+Homepage = "https://github.com/bobcoi03/computeruse-data-collection"
+Repository = "https://github.com/bobcoi03/computeruse-data-collection"
+Issues = "https://github.com/bobcoi03/computeruse-data-collection/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["computeruse_datacollection*"]
+
