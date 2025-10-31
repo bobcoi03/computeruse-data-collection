@@ -57,7 +57,7 @@ That's it! The program is ready to use.
 ### Alternative: Install from Source
 
 ```bash
-git clone https://github.com/yourusername/computeruse-data-collection.git
+git clone https://github.com/bobcoi03/computeruse-data-collection
 cd computeruse-data-collection
 pip install .
 ```
@@ -255,9 +255,6 @@ Make sure you have Python 3.8+:
 python --version
 ```
 
-### Still having issues?
-Open an issue on [GitHub](https://github.com/yourusername/computeruse-data-collection/issues) or ask in our [Discord](https://discord.gg/example).
-
 ## Contributing
 
 We'd love your help making this better! You don't need to be a developer:
@@ -312,14 +309,3 @@ A: Absolutely! Export your data and upload it wherever you choose. You have full
 
 **Q: How do I know it's not secretly uploading my data?**  
 A: The code is fully open source—you can inspect it yourself or have someone review it. No network connections are made unless you explicitly export and upload data yourself.
-
-## Community & Support
-
-- 📖 [Documentation](https://docs.example.com)
-- 💬 [Discord Community](https://discord.gg/example)
-- 🐛 [Issue Tracker](https://github.com/yourusername/computeruse-data-collection/issues)
-- 📧 Email: contact@example.com
-
----
-
-**Remember**: Your data, your privacy, your choice. This tool puts you in control.
