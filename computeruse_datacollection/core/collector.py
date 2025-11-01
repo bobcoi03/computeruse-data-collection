@@ -2,6 +2,7 @@
 
 from typing import Optional, Dict, Any
 from pathlib import Path
+import shutil
 from computeruse_datacollection.core.config import Config
 from computeruse_datacollection.core.session import RecordingSession
 from computeruse_datacollection.recorders.keyboard import KeyboardRecorder
@@ -42,6 +43,20 @@ class DataCollector:
             return False
         
         try:
+            # Check available disk space before starting
+            storage_path = self.config.get_storage_path()
+            storage_path.mkdir(parents=True, exist_ok=True)
+            disk_stats = shutil.disk_usage(storage_path)
+            available_gb = disk_stats.free / (1024 ** 3)
+            
+            # Require at least 1 GB free space
+            if available_gb < 1.0:
+                print(f"Error: Insufficient disk space. Only {available_gb:.2f} GB available.")
+                print(f"Please free up disk space or change storage location in Settings.")
+                return False
+            
+            print(f"Available disk space: {available_gb:.1f} GB")
+            
             print("Creating recording session...")
             # Create new session
             self.current_session = RecordingSession(self.config, session_name)

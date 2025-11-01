@@ -9,6 +9,8 @@ import sys
 import subprocess
 import tempfile
 import os
+import atexit
+import shutil
 from pathlib import Path
 from PIL import Image
 
@@ -118,9 +120,23 @@ class ScreenRecorder(BaseRecorder):
         self.frames_dir = self.output_path.parent / f"frames_{self.output_path.stem}"
         self.frames_dir.mkdir(exist_ok=True)
         
+        # Register cleanup handler to remove temp files on crash
+        def cleanup_temp_files():
+            """Remove temp frame directory if it still exists."""
+            if self.frames_dir.exists():
+                try:
+                    shutil.rmtree(self.frames_dir, ignore_errors=True)
+                except:
+                    pass
+        
+        atexit.register(cleanup_temp_files)
+        self._cleanup_handler = cleanup_temp_files
+        
         # We'll save frames as images and use ffmpeg to create MP4
         self._video_writer = None  # Not using OpenCV VideoWriter
         self.frame_paths = []
+        self.batch_size = 500  # Process frames in batches to limit memory
+        self.video_segments = []  # Store paths to video segments
         
         # Calculate frame interval
         frame_interval = 1.0 / self.fps
@@ -190,6 +206,11 @@ class ScreenRecorder(BaseRecorder):
                 self.frame_paths.append(frame_filename)
                 frame_count += 1
                 
+                # Process batch if we've accumulated enough frames
+                if len(self.frame_paths) >= self.batch_size:
+                    self._process_batch(len(self.video_segments))
+                    self.frame_paths = []  # Clear for next batch
+                
                 # Calculate how long to sleep to maintain FPS
                 elapsed = time.time() - loop_start
                 sleep_time = max(0, frame_interval - elapsed)
@@ -215,35 +236,98 @@ class ScreenRecorder(BaseRecorder):
             "fps": actual_fps
         })
     
+    def _process_batch(self, batch_index):
+        """Process a batch of frames into a video segment.
+        
+        Args:
+            batch_index: Index of this batch
+        """
+        if not self.frame_paths:
+            return
+        
+        try:
+            segment_path = self.frames_dir / f"segment_{batch_index:04d}.mp4"
+            actual_fps = getattr(self, 'actual_fps', self.fps)
+            
+            # Create text file listing frames for this batch
+            frames_list = self.frames_dir / f"frames_batch_{batch_index:04d}.txt"
+            with open(frames_list, 'w') as f:
+                for frame_path in self.frame_paths:
+                    f.write(f"file '{frame_path.name}'\n")
+                    f.write(f"duration {1.0/actual_fps}\n")
+            
+            # Use ffmpeg concat to create segment
+            result = subprocess.run(
+                ['ffmpeg', '-f', 'concat', '-safe', '0', '-i', str(frames_list),
+                 '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23',
+                 '-pix_fmt', 'yuv420p', str(segment_path), '-y'],
+                capture_output=True,
+                timeout=60
+            )
+            
+            if result.returncode == 0 and segment_path.exists():
+                self.video_segments.append(segment_path)
+                
+                # Delete processed frame images to free disk space
+                for frame_path in self.frame_paths:
+                    try:
+                        frame_path.unlink()
+                    except:
+                        pass
+                
+                # Delete frames list
+                try:
+                    frames_list.unlink()
+                except:
+                    pass
+        except Exception as e:
+            print(f"Warning: Failed to process batch {batch_index}: {e}")
+    
     def _stop_recording(self):
         """Stop screen capture and release resources."""
-        # Create MP4 from saved frames using ffmpeg
+        # Process any remaining frames
         if hasattr(self, 'frame_paths') and self.frame_paths:
+            print(f"Processing final {len(self.frame_paths)} frames...")
+            self._process_batch(len(getattr(self, 'video_segments', [])))
+        
+        # Combine all segments into final MP4
+        if hasattr(self, 'video_segments') and self.video_segments:
             mp4_path = self.output_path.with_suffix('.mp4')
+            total_segments = len(self.video_segments)
             
-            # Use actual capture FPS, not target FPS
-            actual_fps = getattr(self, 'actual_fps', self.fps)
-            print(f"Creating MP4 from {len(self.frame_paths)} frames (captured at {actual_fps:.1f} fps)...")
+            print(f"Combining {total_segments} video segments...")
             
             try:
-                # Use ffmpeg to create MP4 from image sequence
-                # Important: use actual_fps so video duration matches recording duration
+                # Create concat file for segments
+                concat_file = self.frames_dir / "concat_list.txt"
+                with open(concat_file, 'w') as f:
+                    for segment in self.video_segments:
+                        f.write(f"file '{segment.name}'\n")
+                
+                # Calculate dynamic timeout: 30s base + 10s per segment
+                timeout = 30 + (total_segments * 10)
+                
+                # Concatenate all segments
                 result = subprocess.run(
-                    ['ffmpeg', '-framerate', str(actual_fps), '-i', 
-                     str(self.frames_dir / 'frame_%06d.jpg'),
-                     '-c:v', 'libx264', '-preset', 'medium', '-crf', '23',
-                     '-pix_fmt', 'yuv420p', str(mp4_path), '-y'],
+                    ['ffmpeg', '-f', 'concat', '-safe', '0', '-i', str(concat_file),
+                     '-c', 'copy', str(mp4_path), '-y'],
                     capture_output=True,
-                    timeout=120
+                    timeout=timeout
                 )
                 
                 if result.returncode == 0 and mp4_path.exists():
                     print(f"✓ MP4 created successfully: {get_human_readable_size(mp4_path.stat().st_size)}")
                     self.output_path = mp4_path
                     
-                    # Clean up frame images
-                    import shutil
+                    # Clean up segments and temp directory
                     shutil.rmtree(self.frames_dir, ignore_errors=True)
+                    
+                    # Unregister cleanup handler since we cleaned up successfully
+                    if hasattr(self, '_cleanup_handler'):
+                        try:
+                            atexit.unregister(self._cleanup_handler)
+                        except:
+                            pass
                 else:
                     print(f"Failed to create MP4")
                     if result.stderr:
@@ -251,6 +335,42 @@ class ScreenRecorder(BaseRecorder):
             
             except FileNotFoundError:
                 print("Error: ffmpeg not found. Install with: brew install ffmpeg")
+            except subprocess.TimeoutExpired:
+                print(f"Error: ffmpeg timed out after {timeout}s. Video may be too long.")
+            except Exception as e:
+                print(f"Error creating MP4: {e}")
+        elif hasattr(self, 'frame_paths') and len(self.frame_paths) > 0:
+            # Fallback: if no segments but have frames, process them
+            print("No segments created, processing all frames...")
+            mp4_path = self.output_path.with_suffix('.mp4')
+            actual_fps = getattr(self, 'actual_fps', self.fps)
+            
+            # Calculate dynamic timeout based on frame count (conservative estimate)
+            frame_count = len(self.frame_paths)
+            timeout = max(120, frame_count // 10)  # At least 2 min, or ~0.1s per frame
+            
+            try:
+                result = subprocess.run(
+                    ['ffmpeg', '-framerate', str(actual_fps), '-i', 
+                     str(self.frames_dir / 'frame_%06d.jpg'),
+                     '-c:v', 'libx264', '-preset', 'medium', '-crf', '23',
+                     '-pix_fmt', 'yuv420p', str(mp4_path), '-y'],
+                    capture_output=True,
+                    timeout=timeout
+                )
+                
+                if result.returncode == 0 and mp4_path.exists():
+                    print(f"✓ MP4 created successfully: {get_human_readable_size(mp4_path.stat().st_size)}")
+                    self.output_path = mp4_path
+                    
+                    shutil.rmtree(self.frames_dir, ignore_errors=True)
+                    
+                    # Unregister cleanup handler since we cleaned up successfully
+                    if hasattr(self, '_cleanup_handler'):
+                        try:
+                            atexit.unregister(self._cleanup_handler)
+                        except:
+                            pass
             except Exception as e:
                 print(f"Error creating MP4: {e}")
         

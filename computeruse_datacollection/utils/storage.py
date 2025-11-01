@@ -2,6 +2,7 @@
 
 import json
 import os
+import time
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime
@@ -11,15 +12,20 @@ import threading
 class JSONLWriter:
     """Thread-safe JSONL (JSON Lines) writer for streaming event data."""
     
-    def __init__(self, filepath: Path):
+    def __init__(self, filepath: Path, buffer_size: int = 100):
         """Initialize the JSONL writer.
         
         Args:
             filepath: Path to the JSONL file to write to
+            buffer_size: Number of events to buffer before flushing (default: 100)
         """
         self.filepath = filepath
         self.file_handle: Optional[Any] = None
         self.lock = threading.Lock()
+        self.buffer = []
+        self.buffer_size = buffer_size
+        self.last_flush_time = time.time()
+        self.flush_interval = 5.0  # Flush at least every 5 seconds
         self._open()
     
     def _open(self):
@@ -36,12 +42,27 @@ class JSONLWriter:
         with self.lock:
             if self.file_handle:
                 json_line = json.dumps(event, ensure_ascii=False)
-                self.file_handle.write(json_line + '\n')
-                self.file_handle.flush()  # Ensure immediate write to disk
+                self.buffer.append(json_line)
+                
+                # Flush if buffer is full or enough time has passed
+                current_time = time.time()
+                if len(self.buffer) >= self.buffer_size or \
+                   (current_time - self.last_flush_time) >= self.flush_interval:
+                    self._flush_buffer()
+                    self.last_flush_time = current_time
+    
+    def _flush_buffer(self):
+        """Flush buffered events to disk."""
+        if self.buffer and self.file_handle:
+            self.file_handle.write('\n'.join(self.buffer) + '\n')
+            self.file_handle.flush()
+            self.buffer = []
     
     def close(self):
         """Close the file handle."""
         with self.lock:
+            # Flush any remaining buffered events
+            self._flush_buffer()
             if self.file_handle:
                 self.file_handle.close()
                 self.file_handle = None

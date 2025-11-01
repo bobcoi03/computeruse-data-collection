@@ -39,28 +39,29 @@ def _mouse_listener_process(event_queue):
     def on_move(x, y):
         """Handle mouse move in subprocess."""
         try:
-            event_queue.put({"x": int(x), "y": int(y), "action": "move"})
+            # Use put_nowait to avoid blocking if queue is full
+            event_queue.put_nowait({"x": int(x), "y": int(y), "action": "move"})
         except:
-            pass
+            pass  # Queue full or other error, skip this event
     
     def on_click(x, y, button, pressed):
         """Handle mouse click in subprocess."""
         try:
             button_name = get_button_name(button)
             action = "press" if pressed else "release"
-            event_queue.put({
+            event_queue.put_nowait({
                 "x": int(x), 
                 "y": int(y), 
                 "button": button_name, 
                 "action": action
             })
         except:
-            pass
+            pass  # Queue full or other error, skip this event
     
     def on_scroll(x, y, dx, dy):
         """Handle mouse scroll in subprocess."""
         try:
-            event_queue.put({
+            event_queue.put_nowait({
                 "x": int(x), 
                 "y": int(y), 
                 "dx": int(dx), 
@@ -68,7 +69,7 @@ def _mouse_listener_process(event_queue):
                 "action": "scroll"
             })
         except:
-            pass
+            pass  # Queue full or other error, skip this event
     
     # Start listener (blocks until process is terminated)
     with mouse.Listener(on_move=on_move, on_click=on_click, on_scroll=on_scroll) as listener:
@@ -106,8 +107,9 @@ class MouseRecorder(BaseRecorder):
             print("Starting mouse listener (macOS subprocess mode)...")
             import multiprocessing
             
-            # Create queue for events
-            self._event_queue = multiprocessing.Queue()
+            # Create queue for events with maxsize to prevent unbounded growth
+            # 10000 events = ~100 seconds of mouse movement at 100 events/sec
+            self._event_queue = multiprocessing.Queue(maxsize=10000)
             
             # Start listener in separate process
             self._process = multiprocessing.Process(
@@ -119,6 +121,7 @@ class MouseRecorder(BaseRecorder):
             print("✓ Mouse listener subprocess started")
             
             # Poll queue for events
+            last_health_check = time.time()
             while self._recording and not self._stop_event.is_set():
                 try:
                     # Non-blocking get with timeout
@@ -126,6 +129,14 @@ class MouseRecorder(BaseRecorder):
                     self._emit_event("mouse", event_data)
                 except:
                     pass  # Queue empty, continue
+                
+                # Periodically check if subprocess is still alive (every 5 seconds)
+                if time.time() - last_health_check > 5.0:
+                    if not self._process.is_alive():
+                        print("⚠ Warning: Mouse subprocess died unexpectedly")
+                        self._recording = False
+                        break
+                    last_health_check = time.time()
                     
         except Exception as e:
             print(f"Error in mouse listener: {e}")

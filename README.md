@@ -50,19 +50,9 @@ If you're on **macOS Sequoia (15.x)**:
 
 ## Installation
 
-### Simple One-Line Install
-
-Open your terminal (or Command Prompt on Windows) and run:
-
-```bash
-pip install computeruse-datacollection
-```
-
-That's it! The program is ready to use.
-
 > **Note**: Most Mac and Linux systems come with Python pre-installed. If you get an error, you may need to install Python first from [python.org](https://python.org).
 
-### Alternative: Install from Source
+### Install from Source
 
 ```bash
 git clone https://github.com/bobcoi03/computeruse-data-collection

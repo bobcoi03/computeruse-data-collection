@@ -43,17 +43,19 @@ def _keyboard_listener_process(event_queue):
         """Handle key press in subprocess."""
         try:
             key_name = get_key_name(key)
-            event_queue.put({"key": key_name, "action": "press"})
+            # Use put_nowait to avoid blocking if queue is full
+            # If queue is full, event is dropped (backpressure)
+            event_queue.put_nowait({"key": key_name, "action": "press"})
         except:
-            pass
+            pass  # Queue full or other error, skip this event
     
     def on_release(key):
         """Handle key release in subprocess."""
         try:
             key_name = get_key_name(key)
-            event_queue.put({"key": key_name, "action": "release"})
+            event_queue.put_nowait({"key": key_name, "action": "release"})
         except:
-            pass
+            pass  # Queue full or other error, skip this event
     
     # Start listener (blocks until process is terminated)
     with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
@@ -91,8 +93,9 @@ class KeyboardRecorder(BaseRecorder):
             print("Starting keyboard listener (macOS subprocess mode)...")
             import multiprocessing
             
-            # Create queue for events
-            self._event_queue = multiprocessing.Queue()
+            # Create queue for events with maxsize to prevent unbounded growth
+            # 10000 events = ~10 seconds of very fast typing
+            self._event_queue = multiprocessing.Queue(maxsize=10000)
             
             # Start listener in separate process
             self._process = multiprocessing.Process(
@@ -104,6 +107,7 @@ class KeyboardRecorder(BaseRecorder):
             print("✓ Keyboard listener subprocess started")
             
             # Poll queue for events
+            last_health_check = time.time()
             while self._recording and not self._stop_event.is_set():
                 try:
                     # Non-blocking get with timeout
@@ -111,6 +115,14 @@ class KeyboardRecorder(BaseRecorder):
                     self._emit_event("keyboard", event_data)
                 except:
                     pass  # Queue empty, continue
+                
+                # Periodically check if subprocess is still alive (every 5 seconds)
+                if time.time() - last_health_check > 5.0:
+                    if not self._process.is_alive():
+                        print("⚠ Warning: Keyboard subprocess died unexpectedly")
+                        self._recording = False
+                        break
+                    last_health_check = time.time()
                     
         except Exception as e:
             print(f"Error in keyboard listener: {e}")
