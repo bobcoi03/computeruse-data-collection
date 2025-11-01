@@ -22,14 +22,14 @@ This library solves these problems by providing:
 
 ## Key Features
 
-- 🚀 **Easy to Use**: Simple GUI or command-line interface—no coding needed
-- 🔒 **Privacy by Design**: Everything stored locally on your machine
-- 📊 **Standardized Format**: Common data schema for cross-platform compatibility
-- 🎯 **Selective Recording**: Choose what to record (keyboard, mouse, screen, audio)
-- 🔍 **Transparent**: Fully open-source and auditable
-- 🤝 **Your Data, Your Choice**: Export and share on your own terms
-- ⚙️ **Lightweight**: Minimal performance impact on your system
-- 🎨 **User-Friendly Interface**: Clean, intuitive design for everyone
+- **Easy to Use**: Simple GUI or command-line interface—no coding needed
+- **Privacy by Design**: Everything stored locally on your machine
+- **Standardized Format**: Common data schema for cross-platform compatibility
+- **Selective Recording**: Choose what to record (keyboard, mouse, screen, audio)
+- **Transparent**: Fully open-source and auditable
+- **Your Data, Your Choice**: Export and share on your own terms
+- **Lightweight**: Minimal performance impact on your system
+- **User-Friendly Interface**: Clean, intuitive design for everyone
 
 ## System Requirements
 
@@ -41,10 +41,10 @@ This library solves these problems by providing:
 
 Don't worry if you're not sure—the installer will check for you!
 
-### ✅ macOS Sequoia Users
+### macOS Sequoia Users
 
 If you're on **macOS Sequoia (15.x)**:
-- ✅ **All recording modules work!** (keyboard, mouse, screen)
+- **All recording modules work!** (keyboard, mouse, screen)
 - Uses separate processes to avoid tkinter/pynput conflicts
 - Just grant Input Monitoring + Screen Recording permissions in System Preferences
 
@@ -70,10 +70,10 @@ python3 -m computeruse_datacollection
 ```
 
 This opens a simple window where you can:
-- ✅ Click "Start Recording" to begin a session
-- ⚙️ Choose what to record (keyboard, mouse, screen, audio)
-- 📊 View your recorded sessions
-- 💾 Export data when you're ready to share
+- Click "Start Recording" to begin a session
+- Choose what to record (keyboard, mouse, screen, audio)
+- View your recorded sessions
+- Export data when you're ready to share
 
 **Option 2: Command Line**
 ```bash
@@ -152,13 +152,13 @@ The app provides a clean, easy-to-understand interface:
 │  Computer Use Data Collection       │
 ├─────────────────────────────────────┤
 │                                     │
-│  Status: ⚫ Not Recording            │
+│  Status: Not Recording              │
 │                                     │
 │  ┌─── Recording Options ─────────┐ │
-│  │ ☑ Keyboard                    │ │
-│  │ ☑ Mouse                       │ │
-│  │ ☑ Screen                      │ │
-│  │ ☐ Audio                       │ │
+│  │ [x] Keyboard                  │ │
+│  │ [x] Mouse                     │ │
+│  │ [x] Screen                    │ │
+│  │ [ ] Audio                     │ │
 │  └───────────────────────────────┘ │
 │                                     │
 │     [ Start Recording ]             │
@@ -308,22 +308,22 @@ python --version
 ## Contributing
 
 We'd love your help making this better! You don't need to be a developer:
-- 🐛 **Report bugs**: Found something broken? Let us know!
-- 💡 **Suggest features**: Have ideas? Share them!
-- 📝 **Improve docs**: Help make this README clearer
-- 🔧 **Code contributions**: Add features or fix bugs
-- 🌍 **Translations**: Help make this accessible worldwide
+- **Report bugs**: Found something broken? Let us know!
+- **Suggest features**: Have ideas? Share them!
+- **Improve docs**: Help make this README clearer
+- **Code contributions**: Add features or fix bugs
+- **Translations**: Help make this accessible worldwide
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Ethical Guidelines
 
 This tool is designed for consensual data collection. Users should:
-- ✅ Only record their own computer use
-- ✅ Be aware when recording is active
-- ✅ Review data before sharing
-- ❌ Never record others without explicit consent
-- ❌ Never use for surveillance or malicious purposes
+- Only record their own computer use
+- Be aware when recording is active
+- Review data before sharing
+- Never record others without explicit consent
+- Never use for surveillance or malicious purposes
 
 ## License
 
