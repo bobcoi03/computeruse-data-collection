@@ -66,7 +66,7 @@ pip install .
 
 **Option 1: Graphical Interface (Recommended)**
 ```bash
-computeruse-collect
+python3 -m computeruse_datacollection
 ```
 
 This opens a simple window where you can:
